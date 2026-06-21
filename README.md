@@ -1,159 +1,219 @@
-# Turborepo starter
+# Better Uptime
 
-This Turborepo starter is maintained by the Turborepo core team.
+A distributed uptime monitoring service built with TypeScript, Bun, Redis Streams, Prisma, and PostgreSQL.
 
-## Using this example
+Users can register websites, and the system continuously checks their availability from different worker regions. Every website check is recorded with response time metrics and status information.
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
+* Add and manage websites to monitor
+* Distributed website checking using Redis Streams
+* Worker-based architecture
+* Response time tracking
+* Website status monitoring (UP / DOWN)
+* PostgreSQL database with Prisma ORM
+* Consumer Groups for horizontal scaling
+* Region-based monitoring support
+* Built with Bun and TypeScript
+
+---
+
+## Architecture
+
+```text
+User
+  |
+  v
+API Server
+  |
+  v
+PostgreSQL
+  |
+  v
+Pusher Service
+  |
+  v
+Redis Stream
+  |
+  +----------------+
+  |                |
+  v                v
+Worker 1      Worker 2
+  |                |
+  +-------+--------+
+          |
+          v
+Website Checks
+          |
+          v
+Website Tick Records
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+## Tech Stack
 
-### Apps and Packages
+* TypeScript
+* Bun
+* PostgreSQL
+* Prisma
+* Redis Streams
+* Axios
+* Express
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+---
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Monorepo Structure
 
-### Utilities
+```text
+apps/
+├── api/
+├── pusher/
+└── worker/
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+packages/
+├── database/
+└── redisStreams/
 ```
 
-Without global `turbo`, use your package manager:
+### API
 
-```sh
-cd my-turborepo
-npx turbo build
-bun dlx turbo build
-bun exec turbo build
+Handles website creation and management.
+
+### Pusher
+
+Reads websites from the database and pushes monitoring jobs into Redis Streams.
+
+### Worker
+
+Consumes jobs from Redis Consumer Groups and performs website health checks.
+
+### Database Package
+
+Contains Prisma schema and database client.
+
+### RedisStreams Package
+
+Contains Redis Stream helper functions such as:
+
+* XADD
+* XREADGROUP
+* XACK
+
+---
+
+## Environment Variables
+
+### Worker
+
+```env
+REGION_ID=mumbai
+WORKER_ID=worker-1
+DATABASE_URL=your_database_url
+REDIS_URL=your_redis_url
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### API
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
+```env
+DATABASE_URL=your_database_url
+REDIS_URL=your_redis_url
+JWT_SECRET=your_secret
 ```
 
-Without global `turbo`:
+### Pusher
 
-```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+```env
+DATABASE_URL=your_database_url
+REDIS_URL=your_redis_url
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## Installation
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Clone the repository:
 
-```sh
-cd my-turborepo
-turbo dev
+```bash
+git clone https://github.com/your-username/betteruptime.git
+cd betteruptime
 ```
 
-Without global `turbo`, use your package manager:
+Install dependencies:
 
-```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
+```bash
+bun install
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Database Setup
 
-```sh
-turbo dev --filter=web
+Generate Prisma Client:
+
+```bash
+bunx prisma generate
 ```
 
-Without global `turbo`:
+Run migrations:
 
-```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
+```bash
+bunx prisma migrate dev
 ```
 
-### Remote Caching
+---
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## Running the Services
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+### Start API
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+```bash
+cd apps/api
+bun run index.ts
 ```
 
-Without global `turbo`, use your package manager:
+### Start Pusher
 
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
+```bash
+cd apps/pusher
+bun run index.ts
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Start Worker
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
+```bash
+cd apps/worker
+bun run index.ts
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
+## Website Monitoring Flow
 
-## Useful Links
+1. User adds a website.
+2. Website is stored in PostgreSQL.
+3. Pusher periodically reads websites from the database.
+4. Pusher adds website jobs to Redis Streams.
+5. Workers consume jobs using Redis Consumer Groups.
+6. Workers check website availability using Axios.
+7. Response time and status are stored in the database.
+8. Future notification services can trigger alerts for DOWN websites.
 
-Learn more about the power of Turborepo:
+---
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+## Future Improvements
+
+* Email notifications
+* WhatsApp notifications
+* SMS alerts
+* Dashboard with uptime statistics
+* Region-wise monitoring
+* Historical uptime reports
+* Incident tracking
+* Public status pages
+
+---
+
+## Author
+
+Built by Divik as a distributed systems and backend engineering project.
