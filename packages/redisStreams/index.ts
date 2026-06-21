@@ -1,9 +1,19 @@
 import { createClient } from "redis";
 
-const client = await createClient()
+const client = await createClient({
+  url: process.env.REDIS_URL ?? "redis://localhost:6379"
+})
   .on("error", (err) => console.log("Redis Client Error", err))
   .connect();
 
+// ← delete the top-level xGroupCreate block, keep only this:
+export async function initConsumerGroup(regionId: string) {
+  try {
+    await client.xGroupCreate("betteruptime", regionId, "$", { MKSTREAM: true });
+  } catch (e: any) {
+    if (!e.message.includes("BUSYGROUP")) throw e;
+  }
+}
 
 const STREAM_NAME = "betteruptime";
 type WebsiteInput = {

@@ -1,9 +1,9 @@
 {
   "name": "@repo/database",
   "module": "index.ts",
-  "exports" :{
+  "exports": {
     "./client": "./index.ts"
-  }, 
+  },
   "type": "module",
   "private": true,
   "devDependencies": {
@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "prisma": "^7.8.0"
   }
 }
