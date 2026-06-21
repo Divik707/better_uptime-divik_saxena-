@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id        String @id @default(uuid())
+  username  String @unique
+  password  String
+
+  websites  Website[]
+}
+
+model Website {
+  id         String @id @default(uuid())
+  url        String
+  createdAt  DateTime @default(now())
+
+  userId     String
+  user       User @relation(fields: [userId], references: [id])
+
+  ticks      WebsiteTick[]
+}
+
+model Region {
+  id         String @id @default(uuid())
+  name       String
+
+  ticks      WebsiteTick[]
+}
+
+model WebsiteTick {
+  id               String @id @default(uuid())
+
+  websiteId        String
+  website          Website @relation(fields: [websiteId], references: [id])
+
+  regionId         String
+  region           Region @relation(fields: [regionId], references: [id])
+
+  responseTimeInMs Int
+  statusCode       Int?
+  status           Status
+
+  createdAt        DateTime @default(now())
+  @@index([createdAt])
+  @@index([websiteId])
+}
+
+enum Status {
+  UP
+  DOWN
+}
